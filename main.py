@@ -1,10 +1,19 @@
 from tkinter import *
 import numpy as np
 
+## Global variables
+current_element = 0
+values = []
+weights = []
+k_weight = 0
+num_elem = 0
+
+label_1 = ''
+
 def knapsack_solver(max_weight, weight_vector, value_vector):
     n_elements = len(value_vector)
     
-    matrix = [[0 for x in range(W+1)] for x in range(n+1)] 
+    matrix = [[0 for x in range(max_weight+1)] for x in range(n_elements+1)] 
 
     for line in range(n_elements + 1):
         for column in range(max_weight + 1):
@@ -31,62 +40,102 @@ def set_entry(parent, label_text, width=None, **options):
     entry.pack(side=RIGHT)
     return entry
 
+def save_knapsack_weight():
+    global num_elem
+    global k_weight
+    global label_1, element_value, element_weight, go, listbox
+    global current_element
+    
+    listbox = Listbox(back, bg='black', fg='white') 
+
+    try: 
+        k_weight = int(knapsack_weight.get())
+        num_elem = int(num_elements.get())
+    except:
+        print('erro1')
+        ERROR = 'ERRO: Valor inválido'
+        print(ERROR)
+        listbox.config(fg='red')
+        listbox.insert(0,ERROR)
+     
+    label_1 = StringVar()
+    label_1.set('') 
+    num_element = Label(back, textvariable = label_1 , bg='black', fg='white').pack()
+    element_value = set_entry(back, 'Valor:', 30)
+    element_weight = set_entry(back, 'Peso:', 30)
+    
+    if current_element < num_elem:
+        button_widget = Frame(master=back, bg='black')
+        button_widget.pack(fill=X, pady=20, padx=10)
+        go = Button(button_widget, text='Adicionar Elemento',pady=5, width=100,
+                    command=add_values, bg='white', fg='black')
+        go.pack()
+    
+    listbox.pack(fill=BOTH, expand=1, pady=10, padx=10)
+    
+    update()
 
 def add_values():
-    try:
-        n_elem = int(num_elements.get()) 
-    except:
-        print('tá errado')
+    global values, weights, element_value, element_weight, listbox
 
-    v_weight = []
-    v_values = []
+    try:
+        v = int(element_value.get())
+        w = int(element_weight.get())
+        values.append(v)
+        weights.append(w)
+        update()
+    except:
+        print('erro2')
+        ERROR = 'ERRO: Valor inválido'    
+        print(ERROR)                      
+        listbox.config(fg='red')          
+        listbox.insert(0,ERROR)           
+        
+
+def update():    
+    global current_element, num_elem
+    global label_1, go
     
-    for i in range(n_elem):
-        Label(back, text = 'Element' + str(i+1) , bg='black', fg='white').pack()
-        v_values.append(set_entry(back, 'Valor:', 30))
-        v_weight.append(set_entry(back, 'Peso:', 30))
-        
-        if i < n_elem -1 :
-            button_widget = Frame(master=back, bg='black')
-            button_widget.pack(fill=X, pady=20, padx=10)
-            next = Button(button_widget, text='Preencher valores e pesos',pady=5, width=100,
-                          command=save, bg='white', fg='black')
-            next.pack()
-        
-     
-    button_widget = Frame(master=back, bg='black')
-    button_widget.pack(fill=X, pady=20, padx=10)
-    go = Button(button_widget, text='Preencher valores e pesos',pady=5, width=100,
-                command=calc, bg='white', fg='black')
-    go.pack()
+    current_element += 1
+    
+    element_value.delete(0,'end')
+    element_weight.delete(0,'end')
+
+    label_1.set('Elemento ' + str(current_element))
+
+    if current_element >= num_elem:
+        go.config(text='Calcular',command=calc)
     
 def calc():
-    print('oi')
+    global values, weights, current_element, num_elem, k_weight
+    try:                                      
+        v = int(element_value.get())        
+        w = int(element_weight.get())       
+        values.append(v)                      
+        weights.append(w)                     
+   
+    except:                                   
+        print('erro2')                        
+        ERROR = 'ERRO: Valor inválido'        
+        print(ERROR)                          
+        listbox.config(fg='red')              
+        listbox.insert(0,ERROR)               
+
+    result = knapsack_solver(k_weight, weights, values)
+    result_text = 'A soma dos valores que cabem na mochila é ' + str(result)
+    listbox.insert(0,result_text)
 
 if __name__ == '__main__':
     app = Tk()
-#    val = [60, 100, 120] 
-#    wt = [10, 20, 30] 
-#    W = 50
-#    n = len(val) 
-#    print(knapsack_solver(W, wt, val)) 
 
-    app.title('Knapsack problem')
+    app.title('Knapsack Problem')
     app.geometry('500x500')
     app.resizable(0,0)
     
-    back1 = Frame(master=app, bg='black')
-    back1.pack_propagate(0)
-    back1.pack(fill=BOTH, expand=1)
+    back = Frame(master=app, bg='black')
+    back.pack_propagate(0)
+    back.pack(fill=BOTH, expand=1)
 
-    back=Canvas(back1,bg='black',width=300,height=300,scrollregion=(0,0,500,800))
-    vbar=Scrollbar(back1,orient=VERTICAL)
-    vbar.pack(side=RIGHT,fill=Y)
-    vbar.config(command=back.yview)
-    back.config(width=300,height=300)
-    back.config(yscrollcommand=vbar.set)
-    back.pack(side=LEFT,expand=True,fill=BOTH)
-    back.create_rectangle((200,300,300,600))
     
     title =  Label(back, text = 'The Knapsack Problem Solver', bg='black',
                    fg='white')
@@ -99,9 +148,9 @@ if __name__ == '__main__':
     button_widget = Frame(master=back, bg='black')
     button_widget.pack(fill=X, pady=20, padx=10)
     fill = Button(button_widget, text='Preencher valores e pesos',pady=5, width=100,
-                command=add_values, bg='white', fg='black')
+                command=save_knapsack_weight, bg='white', fg='black')
     fill.pack()
+   
     
-    scrollable_body = Scrollable(body, width=32)
-  
+    
     app.mainloop()
